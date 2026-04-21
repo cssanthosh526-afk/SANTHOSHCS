@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>VTU Internship Diary</title>
+
+    <style>
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+
+      body {
+        font-family: "Times New Roman", serif;
+        font-size: 11pt;
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      /* Page */
+      .page {
+        page-break-after: always;
+      }
+
+      /* Headings */
+      h2 {
+        text-align: center;
+        font-size: 16pt;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      h3 {
+        text-align: center;
+        font-size: 14pt;
+        margin: 5px 0 15px 0;
+        text-decoration: underline;
+        font-weight: normal;
+      }
+
+      /* Table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        border: 1px solid black;
+        padding: 8px;
+        vertical-align: top;
+        word-break: break-word;
+      }
+
+      th {
+        text-align: center;
+        background: #f5f5f5;
+      }
+
+      /* Column widths */
+      .date {
+        width: 15%;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .hours {
+        width: 10%;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .work {
+        width: 40%;
+      }
+
+      .learning {
+        width: 35%;
+      }
+
+      /* Prevent row splitting */
+      tr {
+        page-break-inside: avoid;
+        min-height: 110px;
+      }
+
+      /* Footer */
+      .footer {
+        margin-top: 15px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .sig-block {
+        width: 260px;
+        text-align: center;
+      }
+
+      .sig-line {
+        margin-top: 50px;
+        border-top: 1px solid black;
+        padding-top: 5px;
+        font-size: 11pt;
+        font-weight: bold;
+      }
+
+      /* Print button */
+      .print-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        font-size: 14px;
+        background: #0056b3;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      @media print {
+        .print-btn {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="output"></div>
+
+    <button class="print-btn" onclick="window.print()">
+      Print / Save as PDF
+    </button>
+
+    <script>
+      // Formats text to ensure layout stability:
+      // - Cleans whitespace
+      // - Extracts up to 2 sentences
+      // - Falls back to 1 sentence if content is too long
+      function formatText(text) {
+        if (!text) return "";
+
+        const cleaned = String(text)
+          .replace(/\n/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        const sentences = cleaned.split(/(?<=[.?!])\s+/);
+
+        // Try 2 sentences
+        const two = sentences.slice(0, 2).join(" ");
+
+        // If too long → fallback to 1
+        if (two.length > 320) {
+          return sentences[0];
+        }
+
+        return two;
+      }
+
+      // Splits entries into fixed-size pages
+      // Each page contains a variable number of entries (4)
+      function chunk(arr, size) {
+        const res = [];
+        for (let i = 0; i < arr.length; i += size) {
+          res.push(arr.slice(i, i + size));
+        }
+        return res;
+      }
+
+      // Retrieve previously uploaded JSON data from localStorage
+      const raw = localStorage.getItem("diaryData");
+
+      if (!raw) {
+        document.body.innerHTML =
+          "<h3 style='text-align:center; margin-top:50px;'>No data found. Please upload JSON again.</h3>";
+      } else {
+        const data = JSON.parse(raw);
+
+        // Normalize entries for rendering
+        // Applies adaptive text formatting to maintain layout consistency
+        const entries = data.map((e) => ({
+          date: e.date,
+          hours: e.hours,
+          work: formatText(e.work_summary),
+          learning: formatText(e.learnings),
+        }));
+
+        // Group entries into pages for PDF layout
+        const pages = chunk(entries, 4);
+
+        // Generate HTML structure for each page
+        // Includes table layout and signature section
+        const html = pages
+          .map(
+            (page) => `
+    <div class="page">
+      <h2>VISVESVARAYA TECHNOLOGICAL UNIVERSITY</h2>
+      <h3>INTERNSHIP DIARY</h3>
+
+      <table>
+        <tr>
+          <th class="date">Date</th>
+          <th class="hours">Hours</th>
+          <th class="work">Work Summary</th>
+          <th class="learning">Learning Outcome</th>
+        </tr>
+
+        ${page
+          .map(
+            (entry) => `
+          <tr>
+            <td class="date">${entry.date}</td>
+            <td class="hours">${entry.hours} hrs</td>
+            <td>${entry.work}</td>
+            <td>${entry.learning}</td>
+          </tr>
+        `,
+          )
+          .join("")}
+
+      </table>
+
+      <div class="footer">
+        <div class="sig-block">
+          <div class="sig-line">
+            Signature of External Coordinator
+          </div>
+        </div>
+
+        <div class="sig-block">
+          <div class="sig-line">
+            Signature of Internship Coordinator
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+          )
+          .join("");
+
+        document.getElementById("output").innerHTML = html;
+      }
+    </script>
+  </body>
+</html>
