@@ -20,7 +20,7 @@ HOW TO USE
    - Press F12
    - Go to the "Console" tab
 
-4. Copy the entire script (this file)
+4. Copy the entire script
 
 5. Paste it into the console and press Enter
 
@@ -38,7 +38,7 @@ Each entry contains:
 - hours
 - work_summary (from description)
 - learnings (first 2 lines)
--skills ( skills used)
+- skills (first line only)
 
 -------------------------------------------
 NOTES
@@ -62,19 +62,12 @@ NOTES
   // Stores all processed entries across pages
   let finalData = [];
 
-  /**
-   * Helper function to extract only the first two meaningful lines
-   * from a given text block.
-   *
-   * Steps:
-   * - Split text by newline
-   * - Trim whitespace
-   * - Remove empty lines
-   * - Take first 2 lines
-   * - Join back using newline
+  /*
+   * Extract first two meaningful lines
    */
   const getTwoLines = (text) => {
     if (!text) return "";
+
     return text
       .split("\n")
       .map((line) => line.trim())
@@ -83,77 +76,97 @@ NOTES
       .join("\n");
   };
 
-  /**
-   * Main loop to fetch paginated data.
-   * Continues until:
-   * - API response is invalid
-   * - No more entries are returned
-   * - Last page is reached
+  /*
+   * Extract only first meaningful line
+   * Used for skills field
+   */
+  const getOneLine = (text) => {
+    if (!text) return "";
+
+    return text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .slice(0, 1)
+      .join("");
+  };
+
+  /*
+   * Main loop to fetch all paginated diary entries
    */
   while (true) {
     console.log(`Fetching page ${page}...`);
 
-    // Fetch diary entries for the current page
     const res = await fetch(`${API_URL}?page=${page}`, {
-      credentials: "include", // ensures session cookies are sent
-      headers: { Accept: "application/json" },
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
     });
 
     // Stop if request fails
-    if (!res.ok) break;
+    if (!res.ok) {
+      console.log("Failed to fetch page:", page);
+      break;
+    }
 
-    // Parse JSON response
     const data = await res.json();
 
-    // Handle different response shapes safely
+    // Handle API response safely
     const entries = data.data?.data || data.data || [];
 
-    // Stop if no entries are returned
-    if (!entries.length) break;
+    // Stop if no entries found
+    if (!entries.length) {
+      console.log("No more entries found.");
+      break;
+    }
 
-    /**
-     * Extract only required fields and normalize content.
-     * - work_summary comes from description
-     * - learnings processed similarly
+    /*
+     * Process entries and keep only required fields
      */
     finalData.push(
       ...entries.map((e) => ({
-        date: e.date,
-        hours: e.hours,
+        date: e.date || "",
+        hours: e.hours || "",
         work_summary: getTwoLines(e.description || ""),
         learnings: getTwoLines(e.learnings || ""),
-        skills: getoneline(e.skills || ""),
-      })),
+        skills: getOneLine(e.skills || ""),
+      }))
     );
 
-    // Stop if last page is reached (based on API metadata)
-    if (data.meta?.last_page && page >= data.meta.last_page) break;
+    // Stop if last page is reached
+    if (data.meta?.last_page && page >= data.meta.last_page) {
+      console.log("Last page reached.");
+      break;
+    }
 
-    // Move to next page
     page++;
   }
 
-  /**
-   * Sort all entries in ascending order by date
-   * Ensures chronological ordering for final output
+  /*
+   * Sort entries by date (oldest to newest)
    */
   finalData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  /**
-   * Create a downloadable JSON file in the browser
+  /*
+   * Create downloadable JSON file
    */
-  const blob = new Blob([JSON.stringify(finalData, null, 2)], {
-    type: "application/json",
-  });
+  const blob = new Blob(
+    [JSON.stringify(finalData, null, 2)],
+    { type: "application/json" }
+  );
 
   const url = URL.createObjectURL(blob);
 
-  // Create a temporary anchor element to trigger download
   const a = document.createElement("a");
   a.href = url;
   a.download = "refined_diary.json";
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 
-  // Log completion status
-  console.log("Extraction complete:", finalData.length);
+  URL.revokeObjectURL(url);
+
+  console.log("Extraction complete!");
+  console.log("Total entries:", finalData.length);
 })();
