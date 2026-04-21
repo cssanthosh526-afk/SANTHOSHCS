@@ -41,6 +41,7 @@ Click below to watch the full walkthrough:
   - Hours
   - Work Summary
   - Learnings
+  - skills
 
 ### Data Processing
 
@@ -166,7 +167,8 @@ Each entry:
   "date": "YYYY-MM-DD",
   "hours": 6,
   "work_summary": "First two meaningful lines",
-  "learnings": "First two meaningful lines"
+  "learnings": "First two meaningful lines",
+  "skills": "First one meaningful lines",
 }
 ```
 
