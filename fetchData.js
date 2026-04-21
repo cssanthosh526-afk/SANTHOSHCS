@@ -38,6 +38,7 @@ Each entry contains:
 - hours
 - work_summary (from description)
 - learnings (first 2 lines)
+-skills ( skills used)
 
 -------------------------------------------
 NOTES
@@ -121,6 +122,7 @@ NOTES
         hours: e.hours,
         work_summary: getTwoLines(e.description || ""),
         learnings: getTwoLines(e.learnings || ""),
+        skills: getoneline(e.skills || ""),
       })),
     );
 
