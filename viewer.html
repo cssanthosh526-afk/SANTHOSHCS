@@ -186,10 +186,11 @@
           hours: e.hours,
           work: formatText(e.work_summary),
           learning: formatText(e.learnings),
+          skills: formateText(e.skills),
         }));
 
         // Group entries into pages for PDF layout
-        const pages = chunk(entries, 4);
+        const pages = chunk(entries, 5);
 
         // Generate HTML structure for each page
         // Includes table layout and signature section
@@ -206,6 +207,7 @@
           <th class="hours">Hours</th>
           <th class="work">Work Summary</th>
           <th class="learning">Learning Outcome</th>
+          <th class="skills">skills</th>
         </tr>
 
         ${page
@@ -216,6 +218,7 @@
             <td class="hours">${entry.hours} hrs</td>
             <td>${entry.work}</td>
             <td>${entry.learning}</td>
+            <td>${entry.skills}</td>
           </tr>
         `,
           )
