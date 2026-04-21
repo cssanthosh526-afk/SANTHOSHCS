@@ -1,0 +1,100 @@
+VTU INTERNSHIP DIARY GENERATOR - COMPLETE STEPS
+
+===========================================
+STEP 1: EXTRACT DATA FROM VTU PORTAL
+===========================================
+
+1. Open the VTU diary page:
+   https://vtu.internyet.in/dashboard/student/diary-entries
+
+2. Make sure you are logged in.
+
+3. Open Developer Tools:
+   - Press F12
+   - Go to the "Console" tab
+
+4. Open the file "fetchData.js" from this project.
+
+5. Copy the entire contents of fetchData.js.
+
+6. Paste it into the browser console and press Enter.
+
+7. Wait for the script to finish:
+   - You will see logs like "Fetching page X..."
+
+8. After completion, a file will be downloaded:
+   refined_diary.json
+
+-------------------------------------------
+IMPORTANT:
+- Do NOT close the tab while the script is running
+- Ensure all pages are fetched before proceeding
+-------------------------------------------
+
+
+===========================================
+STEP 2: GENERATE DIARY (UPLOAD JSON)
+===========================================
+
+1. Open the file:
+   index.html
+
+2. In the "Upload JSON File" section:
+   - Click "Choose File"
+   - Select "refined_diary.json"
+
+3. Click:
+   "Generate Diary"
+
+4. You will be redirected to:
+   viewer.html
+
+
+===========================================
+STEP 3: SAVE AS PDF
+===========================================
+
+1. On the viewer page, click:
+   "Print / Save as PDF"
+
+   OR press:
+   Ctrl + P
+
+2. In the print settings:
+
+   - Destination → Save as PDF
+   - Pages → All
+   - Layout → Portrait
+   - Margins → Default (or Custom if needed)
+
+3. VERY IMPORTANT:
+   - Disable "Headers and Footers"
+
+   (This removes date, URL, and extra text from the PDF)
+
+4. Click:
+   Save
+
+5. Choose location and save the PDF.
+
+
+===========================================
+FINAL OUTPUT
+===========================================
+
+You will get a clean VTU-formatted internship diary PDF with:
+
+- Proper table structure
+- 4 entries per page
+- Balanced layout
+- Signature sections included
+
+
+===========================================
+NOTES
+===========================================
+
+- Recommended browser: Google Chrome
+- Do not refresh viewer.html (data is stored in localStorage)
+- Keep the JSON file safe for reuse
+- If layout looks off, ensure print scale is set to 100%
