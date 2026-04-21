@@ -5,7 +5,7 @@ VTU DIARY DATA EXTRACTOR (BROWSER SCRIPT)
 
 DESCRIPTION:
 This script extracts internship diary entries from the VTU portal,
-processes them, and downloads a clean JSON file.
+processes them, and downloads a clean JSON file including Skills field.
 
 -------------------------------------------
 HOW TO USE
@@ -36,63 +36,61 @@ OUTPUT FORMAT
 Each entry contains:
 - date
 - hours
-- work_summary (from description)
-- learnings (first 2 lines)
-- skills (first line only)
+- work_summary
+- learnings
+- skills
 
 -------------------------------------------
 NOTES
 -------------------------------------------
 
 - Requires active login session
-- Runs entirely in browser (no installation needed)
-- Safe to use for personal data extraction
+- Runs entirely in browser
+- No installation needed
+- Safe for personal use
 
 ===========================================
 */
 
 (async () => {
-  // Base API endpoint for fetching internship diary entries
   const API_URL =
     "https://vtuapi.internyet.in/api/v1/student/internship-diaries";
 
-  // Tracks current page for paginated API requests
   let page = 1;
-
-  // Stores all processed entries across pages
   let finalData = [];
 
   /*
    * Extract first two meaningful lines
+   * Used for work_summary and learnings
    */
   const getTwoLines = (text) => {
     if (!text) return "";
 
     return text
       .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
       .slice(0, 2)
       .join("\n");
   };
 
   /*
    * Extract only first meaningful line
-   * Used for skills field
+   * Used for skills column
    */
   const getOneLine = (text) => {
     if (!text) return "";
 
     return text
       .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
       .slice(0, 1)
       .join("");
   };
 
   /*
-   * Main loop to fetch all paginated diary entries
+   * Main fetch loop for all pages
    */
   while (true) {
     console.log(`Fetching page ${page}...`);
@@ -100,42 +98,59 @@ NOTES
     const res = await fetch(`${API_URL}?page=${page}`, {
       credentials: "include",
       headers: {
-        Accept: "application/json",
-      },
+        Accept: "application/json"
+      }
     });
 
-    // Stop if request fails
     if (!res.ok) {
-      console.log("Failed to fetch page:", page);
+      console.log(`Failed to fetch page ${page}`);
       break;
     }
 
     const data = await res.json();
 
-    // Handle API response safely
-    const entries = data.data?.data || data.data || [];
+    /*
+     * Safe API response handling
+     * Supports multiple response formats
+     */
+    const entries =
+      data?.data?.data ||
+      data?.data ||
+      data?.internship_diaries ||
+      [];
 
-    // Stop if no entries found
     if (!entries.length) {
       console.log("No more entries found.");
       break;
     }
 
     /*
-     * Process entries and keep only required fields
+     * Extract required fields
      */
     finalData.push(
       ...entries.map((e) => ({
         date: e.date || "",
         hours: e.hours || "",
-        work_summary: getTwoLines(e.description || ""),
-        learnings: getTwoLines(e.learnings || ""),
-        skills: getOneLine(e.skills || ""),
+        work_summary: getTwoLines(
+          e.description ||
+          e.work_summary ||
+          ""
+        ),
+        learnings: getTwoLines(
+          e.learnings || ""
+        ),
+        skills: getOneLine(
+          e.skills ||
+          e.skill ||
+          ""
+        )
       }))
     );
 
-    // Stop if last page is reached
-    if (data.meta?.last_page && page >= data.meta.last_page) {
+    /*
+     * Stop if last page reached
+     */
+    if (data?.meta?.last_page && page >= data.meta.last_page) {
       console.log("Last page reached.");
       break;
     }
@@ -144,16 +159,29 @@ NOTES
   }
 
   /*
-   * Sort entries by date (oldest to newest)
+   * Sort by date (oldest → newest)
    */
-  finalData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  finalData.sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  /*
+   * Prevent blank download
+   */
+  if (finalData.length === 0) {
+    alert("No diary entries found. Please check login session.");
+    console.log("No data extracted.");
+    return;
+  }
 
   /*
    * Create downloadable JSON file
    */
   const blob = new Blob(
     [JSON.stringify(finalData, null, 2)],
-    { type: "application/json" }
+    {
+      type: "application/json"
+    }
   );
 
   const url = URL.createObjectURL(blob);
@@ -161,6 +189,7 @@ NOTES
   const a = document.createElement("a");
   a.href = url;
   a.download = "refined_diary.json";
+
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
